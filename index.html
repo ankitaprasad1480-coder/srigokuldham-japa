@@ -290,13 +290,13 @@ $('#pts').innerHTML=Array.from({length:12},(_,i)=>'<em class="pt" style="left:'+
 const setU=u=>{U={id:u.id,email:u.email,name:(u.user_metadata&&u.user_metadata.name)||u.email.split('@')[0]}};
 async function dbLoad(){
   if(!sb)return ld(K('logs'),{});
-  const {data,error}=await sb.from('japa_logs').select('day,rounds');
+  const {data,error}=await sb.from('japa_logs').select('day,rounds').eq('user_id',U.id);
   if(error){toast('Could not load: '+error.message);return {}}
   const o={};data.forEach(r=>o[r.day]=r.rounds);return o;
 }
 async function dbSave(day,r){
   if(!sb){sv(K('logs'),L);return}
-  const {error}=r?await sb.from('japa_logs').upsert({user_id:U.id,day,rounds:r}):await sb.from('japa_logs').delete().eq('day',day);
+  const {error}=r?await sb.from('japa_logs').upsert({user_id:U.id,day,rounds:r}):await sb.from('japa_logs').delete().eq('user_id',U.id).eq('day',day);
   if(error)toast('Save failed: '+error.message);
 }
 $('#su').onclick=async()=>{
