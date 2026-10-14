@@ -101,8 +101,6 @@ nav button i{display:block;font-style:normal;font-size:20px}
 .mala i{position:absolute;left:0;top:0;width:14px;height:14px;margin:-7px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#fff3c4,#d9992a 55%,#7a4a0a);box-shadow:0 3px 6px rgba(0,0,0,.3)}
 .mala i.guru{width:22px;height:22px;margin:-11px;background:radial-gradient(circle at 32% 30%,#ffd1dc,#c2185b 55%,#5a0a2a)}
 .toast{width:max-content;max-width:90vw}
-.ring::before{pointer-events:none}
-.tap{position:relative;z-index:1;touch-action:manipulation}
 .hide{display:none}
 </style></head><body>
 
@@ -113,13 +111,20 @@ nav button i{display:block;font-style:normal;font-size:20px}
 </div>
 
 <div class="wrap" id="auth">
-  <div class="card" style="margin-top:16px">
+  <div class="card" id="ac" style="margin-top:16px">
     <h2>Hare Krishna 🙏</h2>
     <p class="mut">Sign in to keep your daily japa — your rounds and total are saved to your account.</p>
     <input type="text" id="nm" placeholder="Your name (e.g. Radha Dasi)">
     <input type="email" id="em" placeholder="Email"><input type="password" id="pw" placeholder="Password (6+ characters)" class="hide">
     <button class="btn" id="go">Enter the Dham</button><button class="btn ghost hide" id="su" style="margin-top:8px">Create new account</button>
+    <p class="mut hide" id="fp" style="text-align:center;margin:10px 0 0"><a href="#" id="fg" style="color:var(--bl)">Forgot password?</a></p>
     <p class="mut" style="margin-bottom:0"><span id="pn">Preview mode: sign-in is saved on this device only. Real accounts and cloud sync switch on once Supabase is configured.</span></p>
+    <p class="mut" style="text-align:center;margin:10px 0 0;font-size:12px"><a href="admin.html" style="color:var(--mut)">Admin login</a></p>
+  </div>
+  <div class="card hide" id="rc" style="margin-top:16px">
+    <h2>Set a new password</h2>
+    <input type="password" id="np" placeholder="New password (6+ characters)">
+    <button class="btn" id="npb">Update password</button>
   </div>
   <div class="card mantra">हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे<br>हरे राम हरे राम राम राम हरे हरे</div>
 </div>
@@ -186,10 +191,25 @@ const ds=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Strin
 const TODAY=ds(new Date());
 let U=ld('japa:user',null),L={},B=0,G=16,sel=TODAY,cm=new Date();cm.setDate(1);
 const K=x=>'japa:'+x+':'+U.email;
+const RECOV=location.hash.includes('type=recovery');
+async function authMsg(err,email){
+  const m=(err.message||'').toLowerCase();
+  if(m.includes('invalid login')){
+    const {data,error}=await sb.rpc('email_exists',{p_email:email});
+    if(error)return err.message;
+    return data===false?"Account doesn't exist. Please create an account and try to sign in.":"Incorrect password. Try again, or tap 'Forgot password?'";
+  }
+  if(m.includes('already registered'))return 'This email already has an account. Please sign in.';
+  if(m.includes('not confirmed'))return 'Please confirm your email first (check your inbox for the link).';
+  return err.message;
+}
 function toast(t){const e=$('#ts');e.textContent=t;e.classList.add('on');clearTimeout(window._tt);window._tt=setTimeout(()=>e.classList.remove('on'),Math.max(2500,t.length*80))}
 async function start(){
   $('#auth').classList.add('hide');$('#app').classList.remove('hide');$('#nv').classList.remove('hide');
-  L=await dbLoad();B=ld(K('beads'),0);G=ld(K('goal'),16);$('#gl').value=G;sel=TODAY;draw();
+  L=await dbLoad();B=ld(K('beads'),0);G=ld(K('goal'),16);
+  if(sb){const lg=G,{data:pr}=await sb.from('profiles').select('goal').eq('user_id',U.id).maybeSingle();
+    if(pr&&pr.goal){G=(pr.goal===16&&lg!==16)?lg:pr.goal;if(G!==pr.goal)saveGoal()}}
+  $('#gl').value=G;sel=TODAY;draw();
 }
 $('#go').onclick=async()=>{
   const n=$('#nm').value.trim(),e=$('#em').value.trim().toLowerCase();
@@ -198,8 +218,8 @@ $('#go').onclick=async()=>{
   const p=$('#pw').value;if(p.length<6)return toast('Password needs 6+ characters');
   toast('Signing in...');
   const {data,error}=await sb.auth.signInWithPassword({email:e,password:p});
-  if(error)return toast(error.message);
-  setU(data.user);await start();toast('Hare Krishna, '+U.name.split(' ')[0]+' 🙏');
+  if(error)return toast(await authMsg(error,e));
+  setU(data.user);await sb.rpc('record_login');await start();toast('Hare Krishna, '+U.name.split(' ')[0]+' 🙏');
 };
 $('#lo').onclick=ev=>{ev.preventDefault();if(sb)sb.auth.signOut();sv('japa:user',null);U=null;$('#app').classList.add('hide');$('#nv').classList.add('hide');$('#auth').classList.remove('hide')};
 const tot=()=>Object.values(L).reduce((a,b)=>a+b,0);
@@ -240,7 +260,8 @@ $('#sv').onclick=()=>{
   if(r)L[sel]=r;else delete L[sel];
   dbSave(sel,r);draw();toast('Saved '+r+' rounds 🙏');
 };
-$('#gl').onchange=()=>{G=Math.max(1,Math.min(64,+$('#gl').value||16));sv(K('goal'),G);draw()};
+function saveGoal(){if(sb&&U&&U.id)sb.from('profiles').update({goal:G}).eq('user_id',U.id).then(({error})=>{if(error)toast('Goal not synced: '+error.message)})}
+$('#gl').onchange=()=>{G=Math.max(1,Math.min(64,+$('#gl').value||16));sv(K('goal'),G);saveGoal();draw()};
 function ctr(){$('#bd').textContent=B;$('#rg').style.setProperty('--p',B/108*100)}
 $('#tp').onclick=()=>{
   B++;try{navigator.vibrate&&navigator.vibrate(15)}catch(e){}
@@ -282,9 +303,10 @@ $('#su').onclick=async()=>{
   if(!n||!e.includes('@')||p.length<6)return toast('Please enter name, email and a 6+ character password');
   toast('Creating your account...');
   const {data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{name:n}}});
-  if(error)return toast(error.message);
-  if(!data.session)return toast('Check your email to confirm, then sign in');
-  setU(data.user);await start();
+  if(error)return toast(await authMsg(error,e));
+  if(data.user&&data.user.identities&&!data.user.identities.length)return toast('This email already has an account. Please sign in.');
+  if(!data.session)return toast('Account created! Check your email to confirm, then sign in.');
+  setU(data.user);await sb.rpc('record_login');await start();
 };
 const ymd=k=>k.replace(/-/g,'');
 const nxt=k=>{const d=new Date(k+'T00:00:00');d.setDate(d.getDate()+1);return ymd(ds(d))};
@@ -298,7 +320,24 @@ $('#ics').onclick=()=>{
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/calendar'}));a.download='japa-history.ics';a.click();
 };
 window.addEventListener('unhandledrejection',ev=>toast('Error: '+((ev.reason&&ev.reason.message)||ev.reason)));
-if(sb){$('#pw').classList.remove('hide');$('#su').classList.remove('hide');$('#pn').style.display='none';
-  sb.auth.getSession().then(({data})=>{if(data.session){setU(data.session.user);start()}});
+if(sb){$('#pw').classList.remove('hide');$('#su').classList.remove('hide');$('#fp').classList.remove('hide');$('#pn').style.display='none';
+  if(location.hash.includes('error_code=otp_expired'))toast('That reset link has expired. Please request a new one.');
+  if(RECOV){$('#ac').classList.add('hide');$('#rc').classList.remove('hide')}
+  sb.auth.getSession().then(({data})=>{if(data.session&&!RECOV){setU(data.session.user);start()}});
+  $('#fg').onclick=async ev=>{
+    ev.preventDefault();const e=$('#em').value.trim().toLowerCase();
+    if(!e.includes('@'))return toast('Type your email above first, then tap Forgot password');
+    const {data}=await sb.rpc('email_exists',{p_email:e});
+    if(data===false)return toast("Account doesn't exist. Please create an account first.");
+    const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.href.split('#')[0].split('?')[0]});
+    toast(error?error.message:'Password reset link sent. Check your email 📧');
+  };
+  $('#npb').onclick=async()=>{
+    const p=$('#np').value;if(p.length<6)return toast('Password needs 6+ characters');
+    const {error}=await sb.auth.updateUser({password:p});if(error)return toast(error.message);
+    await sb.auth.signOut();history.replaceState(null,'',location.pathname);
+    $('#rc').classList.add('hide');$('#ac').classList.remove('hide');$('#np').value='';
+    toast('Password updated. Please sign in with your new password 🙏');
+  };
 }else if(U)start();
 </script></body></html>
