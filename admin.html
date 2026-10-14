@@ -1,0 +1,311 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin · Sri Gokul Dham Japa</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff7e8;--card:#fffdf8;--ink:#3b2a1a;--mut:#8a6f55;--sf:#e07b12;--gd:#c9962b;--bl:#a3274f;--ln:#ecd9b8;--hd1:#f6a23a;--hd2:#a8265a}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1410;--card:#261c15;--ink:#f6e8d2;--mut:#b99d7e;--ln:#3d2e22;--hd1:#a8540b;--hd2:#4a1230;--bl:#ff9db9}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;padding:env(safe-area-inset-top,0px) 0 40px}
+h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;margin:0}
+.hd{background:linear-gradient(160deg,var(--hd1),var(--hd2));color:#fff8e6;text-align:center;padding:18px 16px 22px;border-radius:0 0 28px 28px}
+.hd h1{font-size:28px;margin:2px 0}.hd p{margin:0;font-size:13px;opacity:.92}
+.wrap{max-width:1040px;margin:0 auto;padding:16px}
+.narrow{max-width:420px;margin:16px auto}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(201,150,43,.12)}
+input,select,button{font:inherit}
+input[type=text],input[type=email],input[type=password],input[type=search],select{width:100%;padding:11px;border-radius:12px;border:1px solid var(--ln);background:var(--bg);color:var(--ink);margin:6px 0}
+.btn{background:linear-gradient(135deg,var(--sf),#d4560a);color:#fff;border:0;border-radius:14px;padding:12px 18px;font-weight:600;cursor:pointer;width:100%}
+.btn.ghost{background:transparent;color:var(--bl);border:1px solid var(--bl)}
+.btn.sm{width:auto;padding:8px 14px;font-size:13px}
+.btn:disabled{opacity:.5}
+.mut{color:var(--mut);font-size:13px}
+.hide{display:none!important}
+.top{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.tabs{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+.tabs button{background:var(--card);border:1px solid var(--ln);color:var(--mut);border-radius:12px;padding:9px 16px;cursor:pointer;font-weight:600}
+.tabs button.on{color:#fff;background:var(--sf);border-color:var(--sf)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:12px;text-align:center}
+.stat b{display:block;font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;color:var(--sf)}
+.stat span{font-size:12px;color:var(--mut)}
+.ctl{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:center}
+@media(max-width:640px){.ctl{grid-template-columns:1fr 1fr}.ctl input{grid-column:1/-1}}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 8px;border-bottom:1px dashed var(--ln);text-align:left;white-space:nowrap;vertical-align:middle}
+th{color:var(--mut);font-weight:600;font-size:12px}
+td .mut{font-size:12px}
+.bar{height:6px;background:var(--ln);border-radius:9px;overflow:hidden;margin-top:4px;min-width:70px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gd),var(--sf))}
+.mb{background:none;border:1px solid var(--ln);color:var(--ink);border-radius:8px;padding:4px 9px;cursor:pointer;font-size:12px;margin-right:4px}
+.spark{display:flex;align-items:flex-end;gap:5px;height:110px;margin:8px 0 22px}
+.spark div{flex:1;background:linear-gradient(180deg,var(--sf),var(--gd));border-radius:6px 6px 0 0;min-height:3px;position:relative}
+.spark div span{position:absolute;bottom:-17px;left:0;right:0;text-align:center;font-size:10px;color:var(--mut)}
+.hrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed var(--ln);gap:10px}
+.hrow:last-child{border:0}.hrow b{color:var(--sf)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:20}
+.modal .card{width:100%;max-width:560px;margin:0}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.x{background:none;border:0;font-size:20px;color:var(--mut);cursor:pointer}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:var(--bl);color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;text-align:center;width:max-content;max-width:90vw;z-index:30}
+.toast.on{opacity:1}
+</style></head><body>
+
+<div class="hd"><div style="font-size:13px;letter-spacing:.14em;opacity:.9">॥ हरे कृष्ण ॥</div><h1>🪷 Admin · Sri Gokul Dham</h1><p>Japa dashboard</p></div>
+
+<!-- SIGN IN -->
+<div class="wrap" id="auth">
+  <div class="card narrow" id="ac">
+    <h2>Admin sign in</h2>
+    <p class="mut">Only approved admins can open the dashboard.</p>
+    <input type="email" id="em" placeholder="Admin email" autocomplete="username">
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
+    <button class="btn" id="go">Sign in</button>
+    <p class="mut" style="text-align:center;margin-bottom:0"><a href="#" id="fg" style="color:var(--bl)">Forgot password?</a> · <a href="index.html" style="color:var(--mut)">Back to app</a></p>
+  </div>
+  <div class="card narrow hide" id="rc">
+    <h2>Set a new password</h2>
+    <input type="password" id="np" placeholder="New password (6+ characters)" autocomplete="new-password">
+    <button class="btn" id="npb">Update password</button>
+  </div>
+  <p class="mut hide" id="cfgwarn" style="text-align:center">Supabase is not set up yet. Paste your anon public key in config.js.</p>
+</div>
+
+<!-- DASHBOARD -->
+<div class="wrap hide" id="dash">
+  <div class="top"><span class="mut" id="who"></span><span><button class="btn ghost sm" id="rf">↻ Refresh</button> <button class="btn ghost sm" id="lo">Sign out</button></span></div>
+  <div class="tabs" id="tabs">
+    <button data-t="ov" class="on">Overview</button><button data-t="pt">Participants</button><button data-t="lg">Login history</button>
+  </div>
+
+  <section id="t-ov"></section>
+
+  <section id="t-pt" class="hide">
+    <div class="card">
+      <div class="ctl">
+        <input type="search" id="q" placeholder="Search name or email">
+        <select id="fl"><option value="a">Everyone</option><option value="t">Chanted today</option><option value="n">Not yet today</option><option value="z">Never chanted</option></select>
+        <select id="so"><option value="tot">Most rounds</option><option value="today">Today</option><option value="streak">Longest streak</option><option value="name">Name A–Z</option><option value="login">Last login</option><option value="new">Newest</option></select>
+        <button class="btn ghost sm" id="csv">⬇ CSV</button>
+      </div>
+      <p class="mut" id="cnt" style="margin:8px 0 4px"></p>
+      <div class="tw" id="pl"></div>
+    </div>
+  </section>
+
+  <section id="t-lg" class="hide">
+    <div class="stats" id="lst"></div>
+    <div class="card">
+      <input type="search" id="lq" placeholder="Search name or email">
+      <div class="tw" id="ll"></div>
+      <button class="btn ghost sm hide" id="lm" style="margin-top:10px">Show more</button>
+      <p class="mut" style="margin-bottom:0">Passwords are never stored here. History starts from the day this update went live.</p>
+    </div>
+  </section>
+</div>
+
+<div class="modal hide" id="md"><div class="card" id="mb"></div></div>
+<div class="toast" id="ts"></div>
+
+<script>
+const CFG=Object.assign({SUPABASE_URL:'',SUPABASE_ANON_KEY:''},window.JAPA_CONFIG||{});
+const sb=(CFG.SUPABASE_URL&&CFG.SUPABASE_ANON_KEY&&window.supabase)?window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY):null;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ds=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const TODAY=ds(new Date());
+const IN=n=>Number(n).toLocaleString('en-IN');
+const fdt=t=>t?new Date(t).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+const fd=k=>k?new Date(k+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
+const RECOV=location.hash.includes('type=recovery');
+let P=[],LG=[],EV=[],S={},evShown=100;
+function toast(t){const e=$('#ts');e.textContent=t;e.classList.add('on');clearTimeout(window._tt);window._tt=setTimeout(()=>e.classList.remove('on'),Math.max(2500,t.length*80))}
+window.addEventListener('unhandledrejection',ev=>toast('Error: '+((ev.reason&&ev.reason.message)||ev.reason)));
+
+/* ---------- auth ---------- */
+async function authMsg(err,email){
+  const m=(err.message||'').toLowerCase();
+  if(m.includes('invalid login')){
+    const {data,error}=await sb.rpc('email_exists',{p_email:email});
+    if(error)return err.message;
+    return data===false?"Account doesn't exist. Please create an account in the app first, then ask to be made an admin.":"Incorrect password. Try again or tap 'Forgot password?'";
+  }
+  if(m.includes('not confirmed'))return 'Please confirm your email first (check your inbox).';
+  return err.message;
+}
+async function isAdmin(){
+  const {data,error}=await sb.rpc('is_admin');
+  if(error){toast('Run schema.sql in Supabase first: '+error.message);return false}
+  return data===true;
+}
+function enter(email){
+  $('#auth').classList.add('hide');$('#dash').classList.remove('hide');
+  $('#who').textContent='Signed in as '+email;load();
+}
+$('#go').onclick=async()=>{
+  const e=$('#em').value.trim().toLowerCase(),p=$('#pw').value;
+  if(!e.includes('@')||!p)return toast('Enter your admin email and password');
+  toast('Signing in...');
+  const {data,error}=await sb.auth.signInWithPassword({email:e,password:p});
+  if(error)return toast(await authMsg(error,e));
+  if(!(await isAdmin())){await sb.auth.signOut();return toast('This account is not an admin account.')}
+  await sb.rpc('record_login');
+  enter(data.user.email);
+};
+$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#go').click()});
+$('#lo').onclick=async()=>{await sb.auth.signOut();P=LG=EV=[];S={};$('#dash').classList.add('hide');$('#auth').classList.remove('hide');$('#pw').value=''};
+$('#fg').onclick=async ev=>{
+  ev.preventDefault();
+  const e=$('#em').value.trim().toLowerCase();
+  if(!e.includes('@'))return toast('Type your admin email above first, then tap Forgot password');
+  const {data}=await sb.rpc('email_exists',{p_email:e});
+  if(data===false)return toast("Account doesn't exist.");
+  const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.href.split('#')[0].split('?')[0]});
+  toast(error?error.message:'Password reset link sent. Check your email 📧');
+};
+$('#npb').onclick=async()=>{
+  const p=$('#np').value;if(p.length<6)return toast('Password needs 6+ characters');
+  const {error}=await sb.auth.updateUser({password:p});
+  if(error)return toast(error.message);
+  await sb.auth.signOut();history.replaceState(null,'',location.pathname);
+  $('#rc').classList.add('hide');$('#ac').classList.remove('hide');$('#np').value='';
+  toast('Password updated. Please sign in with your new password 🙏');
+};
+
+/* ---------- data ---------- */
+async function all(table,cols,order){
+  let out=[],from=0;
+  while(true){
+    let q=sb.from(table).select(cols);
+    order.forEach(o=>q=q.order(o[0],{ascending:o[1]}));
+    const {data,error}=await q.range(from,from+999);
+    if(error)throw error;
+    out=out.concat(data);if(data.length<1000)break;from+=1000;
+  }
+  return out;
+}
+async function load(){
+  $('#rf').disabled=true;
+  try{
+    [P,LG,EV]=await Promise.all([
+      all('profiles','user_id,name,email,goal,created_at,last_login,login_count',[['user_id',true]]),
+      all('japa_logs','user_id,day,rounds',[['user_id',true],['day',true]]),
+      all('login_events','id,user_id,name,email,logged_at',[['id',false]])
+    ]);
+    build();renderAll();
+  }catch(e){toast('Could not load: '+e.message)}
+  $('#rf').disabled=false;
+}
+function streak(days){let n=0,d=new Date();if(!days[ds(d)])d.setDate(d.getDate()-1);while(days[ds(d)]>0){n++;d.setDate(d.getDate()-1)}return n}
+function build(){
+  S={};
+  P.forEach(p=>S[p.user_id]={p,days:{},tot:0,today:0,last:'',met:0,streak:0});
+  LG.forEach(r=>{const s=S[r.user_id];if(!s)return;s.days[r.day]=r.rounds;s.tot+=r.rounds;if(r.day>s.last)s.last=r.day});
+  Object.values(S).forEach(s=>{s.today=s.days[TODAY]||0;s.met=Object.values(s.days).filter(v=>v>=s.p.goal).length;s.streak=streak(s.days)});
+}
+
+/* ---------- overview ---------- */
+function renderOv(){
+  const V=Object.values(S),rt=V.reduce((a,s)=>a+s.tot,0),rtd=V.reduce((a,s)=>a+s.today,0);
+  const cards=[
+    [IN(P.length),'Registered users'],[IN(P.filter(p=>p.last_login).length),'Have logged in'],
+    [IN(V.filter(s=>s.today>0).length),'Chanting today'],[IN(V.filter(s=>s.today>0&&s.today>=s.p.goal).length),'Met goal today'],
+    [IN(rtd),'Rounds today'],[IN(rt),'Total rounds'],[IN(rt*108),'Total japa (rounds × 108)'],[IN(EV.length),'Total logins']
+  ];
+  const byDay={};LG.forEach(r=>byDay[r.day]=(byDay[r.day]||0)+r.rounds);
+  const days=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push([d.getDate(),byDay[ds(d)]||0,ds(d)])}
+  const mx=Math.max(1,...days.map(x=>x[1]));
+  const mon=TODAY.slice(0,7),mm={};
+  LG.forEach(r=>{if(r.day.startsWith(mon))mm[r.user_id]=(mm[r.user_id]||0)+r.rounds});
+  const top=Object.entries(mm).filter(x=>S[x[0]]).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const recent=EV.slice(0,6);
+  $('#t-ov').innerHTML='<div class="stats">'+cards.map(c=>'<div class="stat"><b>'+c[0]+'</b><span>'+c[1]+'</span></div>').join('')+'</div>'+
+  '<div class="card"><h3>Rounds chanted by everyone · last 14 days</h3><div class="spark">'+days.map(x=>'<div title="'+x[2]+': '+x[1]+' rounds" style="height:'+(x[1]/mx*100)+'%"><span>'+x[0]+'</span></div>').join('')+'</div></div>'+
+  '<div class="cols"><div class="card"><h3>🏆 Top chanters this month</h3>'+(top.length?top.map((x,i)=>'<div class="hrow"><span>'+(i+1)+'. '+esc(S[x[0]].p.name)+'</span><span><b>'+x[1]+'</b> rounds</span></div>').join(''):'<p class="mut">No japa logged this month yet.</p>')+'</div>'+
+  '<div class="card"><h3>Latest logins</h3>'+(recent.length?recent.map(e=>'<div class="hrow"><span>'+esc(e.name)+'</span><span class="mut">'+fdt(e.logged_at)+'</span></div>').join(''):'<p class="mut">No logins recorded yet.</p>')+'</div></div>';
+}
+
+/* ---------- participants ---------- */
+function list(){
+  const q=$('#q').value.trim().toLowerCase(),f=$('#fl').value,so=$('#so').value;
+  let a=Object.values(S).filter(s=>!q||(s.p.name||'').toLowerCase().includes(q)||(s.p.email||'').toLowerCase().includes(q));
+  if(f==='t')a=a.filter(s=>s.today>0);if(f==='n')a=a.filter(s=>!s.today);if(f==='z')a=a.filter(s=>!s.tot);
+  const c={tot:(x,y)=>y.tot-x.tot,today:(x,y)=>y.today-x.today,streak:(x,y)=>y.streak-x.streak,
+    name:(x,y)=>(x.p.name||'').localeCompare(y.p.name||''),login:(x,y)=>(y.p.last_login||'').localeCompare(x.p.last_login||''),
+    new:(x,y)=>(y.p.created_at||'').localeCompare(x.p.created_at||'')};
+  return a.sort(c[so]);
+}
+function renderPt(){
+  const a=list();
+  $('#cnt').textContent='Showing '+a.length+' of '+P.length+' people';
+  $('#pl').innerHTML=a.length?'<table><thead><tr><th>Name</th><th>Goal / day</th><th>Today</th><th>Total rounds</th><th>Total japa</th><th>Streak</th><th>Last japa</th><th>Last login</th><th>Logins</th><th></th></tr></thead><tbody>'+
+  a.map(s=>{const pc=Math.min(100,Math.round(s.today/s.p.goal*100));
+    return '<tr><td><b>'+esc(s.p.name)+'</b><div class="mut">'+esc(s.p.email)+'</div></td><td>'+s.p.goal+'</td>'+
+    '<td>'+s.today+' / '+s.p.goal+'<div class="bar"><i style="width:'+pc+'%"></i></div></td><td><b>'+IN(s.tot)+'</b></td><td>'+IN(s.tot*108)+'</td><td>'+s.streak+' 🔥</td>'+
+    '<td>'+fd(s.last)+'</td><td>'+fdt(s.p.last_login)+'</td><td>'+(s.p.login_count||0)+'</td>'+
+    '<td><button class="mb" data-v="'+esc(s.p.user_id)+'">View</button><button class="mb" data-r="'+esc(s.p.email)+'">Send reset link</button></td></tr>'}).join('')+'</tbody></table>':'<p class="mut">No one matches.</p>';
+}
+$('#pl').onclick=async ev=>{
+  const b=ev.target.closest('button');if(!b)return;
+  if(b.dataset.v)return view(b.dataset.v);
+  if(b.dataset.r){
+    if(!confirm('Send a password reset email to '+b.dataset.r+'?'))return;
+    const {error}=await sb.auth.resetPasswordForEmail(b.dataset.r,{redirectTo:new URL('index.html',location.href).href});
+    toast(error?error.message:'Reset link sent to '+b.dataset.r);
+  }
+};
+['#q','#fl','#so'].forEach(s=>$(s).oninput=renderPt);
+function view(id){
+  const s=S[id];if(!s)return;
+  const ks=Object.keys(s.days).sort().reverse(),ev=EV.filter(e=>e.user_id===id).slice(0,10);
+  $('#mb').innerHTML='<div class="mh"><div><h2>'+esc(s.p.name)+'</h2><div class="mut">'+esc(s.p.email)+'</div><div class="mut">Joined '+fd((s.p.created_at||'').slice(0,10))+'</div></div><button class="x" id="mx">✕</button></div>'+
+  '<div class="stats"><div class="stat"><b>'+IN(s.tot)+'</b><span>Total rounds</span></div><div class="stat"><b>'+IN(s.tot*108)+'</b><span>Total japa</span></div><div class="stat"><b>'+s.p.goal+'</b><span>Daily goal (rounds)</span></div><div class="stat"><b>'+s.met+'</b><span>Days goal met</span></div><div class="stat"><b>'+s.streak+'</b><span>Day streak</span></div></div>'+
+  '<h3>Japa history</h3>'+(ks.length?ks.map(k=>'<div class="hrow"><span>'+fd(k)+(s.days[k]>=s.p.goal?' ✅':'')+'</span><span><b>'+s.days[k]+'</b> rounds · '+IN(s.days[k]*108)+'</span></div>').join(''):'<p class="mut">No japa recorded yet.</p>')+
+  '<h3 style="margin-top:14px">Recent logins</h3>'+(ev.length?ev.map(e=>'<div class="hrow"><span class="mut">'+fdt(e.logged_at)+'</span></div>').join(''):'<p class="mut">No logins recorded yet.</p>');
+  $('#md').classList.remove('hide');
+  $('#mx').onclick=()=>$('#md').classList.add('hide');
+}
+$('#md').onclick=ev=>{if(ev.target.id==='md')$('#md').classList.add('hide')};
+$('#csv').onclick=()=>{
+  const c=v=>{v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
+  const rows=[['Name','Email','Daily goal','Rounds today','Total rounds','Total japa','Streak','Days goal met','Last japa','Last login','Logins']]
+    .concat(list().map(s=>[s.p.name,s.p.email,s.p.goal,s.today,s.tot,s.tot*108,s.streak,s.met,s.last,s.p.last_login||'',s.p.login_count||0]));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(c).join(',')).join('\r\n')],{type:'text/csv'}));
+  a.download='japa-participants-'+TODAY+'.csv';a.click();
+};
+
+/* ---------- login history ---------- */
+function renderLg(){
+  const q=$('#lq').value.trim().toLowerCase();
+  const a=EV.filter(e=>!q||(e.name||'').toLowerCase().includes(q)||(e.email||'').toLowerCase().includes(q));
+  const day=Date.now()-864e5;
+  $('#lst').innerHTML=[[P.filter(p=>p.last_login).length,'People who have logged in'],[P.length,'Registered accounts'],[EV.length,'Total logins'],[EV.filter(e=>new Date(e.logged_at)>day).length,'Logins in last 24 hrs']]
+    .map(c=>'<div class="stat"><b>'+IN(c[0])+'</b><span>'+c[1]+'</span></div>').join('');
+  $('#ll').innerHTML=a.length?'<table><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Logged in at (IST)</th></tr></thead><tbody>'+
+    a.slice(0,evShown).map((e,i)=>'<tr><td>'+(a.length-i)+'</td><td><b>'+esc(e.name)+'</b></td><td>'+esc(e.email)+'</td><td>'+fdt(e.logged_at)+'</td></tr>').join('')+'</tbody></table>':'<p class="mut">No logins recorded yet.</p>';
+  $('#lm').classList.toggle('hide',a.length<=evShown);
+}
+$('#lq').oninput=()=>{evShown=100;renderLg()};
+$('#lm').onclick=()=>{evShown+=200;renderLg()};
+
+function renderAll(){renderOv();renderPt();renderLg()}
+$('#rf').onclick=load;
+$('#tabs').onclick=ev=>{
+  const b=ev.target.closest('button');if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  ['ov','pt','lg'].forEach(t=>$('#t-'+t).classList.toggle('hide',t!==b.dataset.t));
+};
+
+/* ---------- start ---------- */
+if(!sb){$('#ac').classList.add('hide');$('#cfgwarn').classList.remove('hide')}
+else{
+  if(location.hash.includes('error_code=otp_expired'))toast('That reset link has expired. Please request a new one.');
+  if(RECOV){$('#ac').classList.add('hide');$('#rc').classList.remove('hide')}
+  else sb.auth.getSession().then(async({data})=>{if(data.session&&await isAdmin())enter(data.session.user.email)});
+}
+</script></body></html>
