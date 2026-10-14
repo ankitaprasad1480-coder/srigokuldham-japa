@@ -165,7 +165,7 @@ $('#fg').onclick=async ev=>{
   if(!e.includes('@'))return toast('Type your admin email above first, then tap Forgot password');
   const {data}=await sb.rpc('email_exists',{p_email:e});
   if(data===false)return toast("Account doesn't exist.");
-  const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.href.split('#')[0].split('?')[0]});
+  const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:new URL('admin.html',location.href).href});
   toast(error?error.message:'Password reset link sent. Check your email 📧');
 };
 $('#npb').onclick=async()=>{
